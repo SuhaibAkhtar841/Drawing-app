@@ -58,9 +58,7 @@
         resizeCanvas();
 
         // Line settings
-        ctx.lineWidth = 4;
         ctx.lineCap = 'round';
-        ctx.strokeStyle = colorPicker.value;
 
         let drawing = false;
         let lastX = 0;
@@ -70,18 +68,27 @@
         // Function to start drawing
         function startDrawing(e) {
             drawing = true;
-            const path = { color: ctx.strokeStyle, width: ctx.lineWidth, points: [] };
+            const color = colorPicker.value;
+            const width = 4; // Set default line width
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+
+            const path = { color: color, width: width, points: [] };
             paths.push(path);
-            lastX = e.touches[0].clientX;
-            lastY = e.touches[0].clientY;
+
+            lastX = e.touches ? e.touches[0].clientX : e.clientX;
+            lastY = e.touches ? e.touches[0].clientY : e.clientY;
+
             path.points.push({ x: lastX, y: lastY });
         }
 
         // Function to draw line
         function draw(e) {
             if (!drawing) return;
-            const currentX = e.touches[0].clientX;
-            const currentY = e.touches[0].clientY;
+
+            const currentX = e.touches ? e.touches[0].clientX : e.clientX;
+            const currentY = e.touches ? e.touches[0].clientY : e.clientY;
 
             const currentPath = paths[paths.length - 1];
             ctx.beginPath();
@@ -135,6 +142,12 @@
         canvas.addEventListener('touchmove', draw);
         canvas.addEventListener('touchend', stopDrawing);
         canvas.addEventListener('touchcancel', stopDrawing);
+
+        // Mouse support for testing on desktop
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseleave', stopDrawing);
 
         // Undo button listener
         undoButton.addEventListener('click', undoLastPath);
