@@ -16,14 +16,24 @@
             align-items: center;
             justify-content: center;
             background-color: #f0f0f0;
+            flex-direction: column;
         }
         canvas {
             border: 1px solid #ddd;
             touch-action: none; /* Prevents scrolling while drawing */
         }
+        #colorPicker {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+        }
     </style>
 </head>
 <body>
+
+    <!-- Color Picker -->
+    <input type="color" id="colorPicker" value="#000000">
 
     <!-- Canvas for Drawing -->
     <canvas id="drawingCanvas"></canvas>
@@ -31,15 +41,19 @@
     <script>
         const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
+        const colorPicker = document.getElementById('colorPicker');
 
         // Set canvas to full screen
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        
         // Line settings
         ctx.lineWidth = 4;
         ctx.lineCap = 'round';
-        ctx.strokeStyle = '#000';
+        ctx.strokeStyle = colorPicker.value; // Initial color
 
         let drawing = false;
         let lastX = 0;
@@ -66,6 +80,11 @@
             drawing = false;
         }
 
+        // Update drawing color on color change
+        colorPicker.addEventListener('input', () => {
+            ctx.strokeStyle = colorPicker.value;
+        });
+
         // Touch event listeners
         canvas.addEventListener('touchstart', startDrawing);
         canvas.addEventListener('touchmove', draw);
@@ -73,10 +92,7 @@
         canvas.addEventListener('touchcancel', stopDrawing);
 
         // Resize canvas if the window size changes
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
+        window.addEventListener('resize', resizeCanvas);
     </script>
 
 </body>
