@@ -80,12 +80,19 @@
         function draw(e) {
             if (!drawing) return;
             const currentPath = paths[paths.length - 1];
-            const [currentX, currentY] = [e.touches[0].clientX, e.touches[0].clientY];
+            const currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
+            
             ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(currentX, currentY);
+            ctx.moveTo(lastX, lastY); // Move to the last point
+            ctx.lineTo(currentX, currentY); // Draw to the current point
             ctx.stroke();
-            [lastX, lastY] = [currentX, currentY];
+
+            // Update last coordinates
+            lastX = currentX;
+            lastY = currentY;
+
+            // Store the point in the current path
             currentPath.points.push({ x: currentX, y: currentY });
         }
 
@@ -109,9 +116,12 @@
                 ctx.strokeStyle = path.color;
                 ctx.lineWidth = path.width;
                 ctx.beginPath();
-                for (let i = 1; i < path.points.length; i++) {
-                    ctx.moveTo(path.points[i - 1].x, path.points[i - 1].y);
-                    ctx.lineTo(path.points[i].x, path.points[i].y);
+                for (let i = 0; i < path.points.length; i++) {
+                    if (i === 0) {
+                        ctx.moveTo(path.points[i].x, path.points[i].y); // Move to the first point
+                    } else {
+                        ctx.lineTo(path.points[i].x, path.points[i].y); // Draw lines between points
+                    }
                 }
                 ctx.stroke();
             });
