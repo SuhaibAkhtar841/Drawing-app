@@ -22,18 +22,23 @@
             border: 1px solid #ddd;
             touch-action: none; /* Prevents scrolling while drawing */
         }
-        #colorPicker {
+        #controls {
             position: absolute;
             top: 10px;
             left: 10px;
             z-index: 10;
+            display: flex;
+            gap: 10px;
         }
     </style>
 </head>
 <body>
 
-    <!-- Color Picker -->
-    <input type="color" id="colorPicker" value="#000000">
+    <!-- Controls for color and undo -->
+    <div id="controls">
+        <input type="color" id="colorPicker" value="#000000">
+        <button id="undoButton">Undo</button>
+    </div>
 
     <!-- Canvas for Drawing -->
     <canvas id="drawingCanvas"></canvas>
@@ -42,37 +47,46 @@
         const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
         const colorPicker = document.getElementById('colorPicker');
+        const undoButton = document.getElementById('undoButton');
 
         // Set canvas to full screen
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            redrawAllPaths(); // Redraw paths after resizing
         }
         resizeCanvas();
-        
+
         // Line settings
         ctx.lineWidth = 4;
         ctx.lineCap = 'round';
-        ctx.strokeStyle = colorPicker.value; // Initial color
+        ctx.strokeStyle = colorPicker.value;
 
         let drawing = false;
         let lastX = 0;
         let lastY = 0;
+        const paths = []; // Stores all drawn paths
 
         // Function to start drawing
         function startDrawing(e) {
             drawing = true;
+            const path = { color: ctx.strokeStyle, width: ctx.lineWidth, points: [] };
+            paths.push(path);
             [lastX, lastY] = [e.touches[0].clientX, e.touches[0].clientY];
+            path.points.push({ x: lastX, y: lastY });
         }
 
         // Function to draw line
         function draw(e) {
             if (!drawing) return;
+            const currentPath = paths[paths.length - 1];
+            const [currentX, currentY] = [e.touches[0].clientX, e.touches[0].clientY];
             ctx.beginPath();
-            ctx.moveTo(lastX, lastY); // Start from last position
-            ctx.lineTo(e.touches[0].clientX, e.touches[0].clientY); // Draw to current touch point
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(currentX, currentY);
             ctx.stroke();
-            [lastX, lastY] = [e.touches[0].clientX, e.touches[0].clientY];
+            [lastX, lastY] = [currentX, currentY];
+            currentPath.points.push({ x: currentX, y: currentY });
         }
 
         // Function to stop drawing
@@ -80,16 +94,42 @@
             drawing = false;
         }
 
+        // Undo function to remove the last path
+        function undoLastPath() {
+            if (paths.length > 0) {
+                paths.pop(); // Remove the last path
+                redrawAllPaths(); // Redraw remaining paths
+            }
+        }
+
+        // Redraw all saved paths
+        function redrawAllPaths() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+            paths.forEach(path => {
+                ctx.strokeStyle = path.color;
+                ctx.lineWidth = path.width;
+                ctx.beginPath();
+                for (let i = 1; i < path.points.length; i++) {
+                    ctx.moveTo(path.points[i - 1].x, path.points[i - 1].y);
+                    ctx.lineTo(path.points[i].x, path.points[i].y);
+                }
+                ctx.stroke();
+            });
+        }
+
         // Update drawing color on color change
         colorPicker.addEventListener('input', () => {
             ctx.strokeStyle = colorPicker.value;
         });
 
-        // Touch event listeners
+        // Event listeners
         canvas.addEventListener('touchstart', startDrawing);
         canvas.addEventListener('touchmove', draw);
         canvas.addEventListener('touchend', stopDrawing);
         canvas.addEventListener('touchcancel', stopDrawing);
+
+        // Undo button listener
+        undoButton.addEventListener('click', undoLastPath);
 
         // Resize canvas if the window size changes
         window.addEventListener('resize', resizeCanvas);
